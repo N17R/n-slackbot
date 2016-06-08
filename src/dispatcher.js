@@ -119,30 +119,25 @@ class Dispatcher {
   }
 
   runCommand(commandName, options) {
-    if (!commandName || !options.channelId || !options.userId) {
-      return;
-    }
+    if (!commandName || !options.channelId || !options.userId) return;
 
     const command = this._commands[commandName];
 
     Rx.Observable
       .zip(
         this._getUser(options.userId),
-        this._getChannel(options.channelId),
-        (user, channel) => {
-          return { user: user, channel: channel };
-        }
+        this._getChannel(options.channelId)
       )
-      .flatMap(info => {
-        if (!info.user || !info.channel) {
+      .flatMap(([user, channel]) => {
+        if (!user || !channel) {
           return Rx.Observable.empty();
         }
 
         delete options.userId;
         delete options.channelId;
 
-        options.user = info.user;
-        options.channel = info.channel;
+        options.user = user;
+        options.channel = channel;
 
         return Rx.Observable.return(options);
       })
