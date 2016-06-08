@@ -35,7 +35,7 @@ controller.hears(
     .runCommand('vote', {
       channelId: message.channel,
       userId: message.user,
-      votedUser: { name: message.match[1] },
+      votedUser: { name: message.match[1].toLowerCase() },
       operator: message.match[2]
     })
   );
