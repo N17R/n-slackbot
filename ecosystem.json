@@ -1,0 +1,9 @@
+{
+  "apps": [{
+    "name": "n-slackbot",
+    "script": "src/index.js",
+    "env": {
+      "NODE_ENV": "production"
+    }
+  }]
+}
