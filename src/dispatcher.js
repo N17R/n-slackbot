@@ -300,7 +300,10 @@ class Dispatcher {
           return scores;
         }, {});
 
-        let points = Object.keys(scores).sort().reverse();
+        let points = Object
+          .keys(scores)
+          .map(point => parseInt(point))
+          .sort((a, b) => b - a);
         points = points.slice(0, Math.min(10, points.length));
 
         const table = points
