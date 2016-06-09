@@ -46,8 +46,8 @@ controller.on('reaction_added', (bot, message) => dispatcher
     userId: message.user,
     votedUser: { id: message.item_user },
     operator: message.reaction
-      .replace(/^\+1$/, '++')
-      .replace(/^\-1$/, '--')
+      .replace(/^\+1.*$/, '++')
+      .replace(/^\-1.*$/, '--')
   })
 );
 
