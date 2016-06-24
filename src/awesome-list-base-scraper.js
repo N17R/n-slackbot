@@ -12,16 +12,19 @@ class AwesomeListBaseScraper {
       .map($ => _(this._parseCategories($))
         .map(category => this._parseLibraries($, category))
         .flatten()
-        .map(library => _.set(
-          library,
-          'score',
-          Math.max(
+        .map(library => {
+          let score = Math.max(
             similarity(library.title, query),
             similarity(library.description, query),
             similarity(library.category, query)
-          )
-        ))
-        .filter(({ score }) => score > 0.6)
+          );
+          if (query.length > 15 && library.description.indexOf(query) > -1) {
+            score = Math.max(0.6, score);
+          }
+
+          return _.set(library, 'score', score);
+        })
+        .filter(({ score }) => score >= 0.6)
         .sortBy('title')
         .reverse()
         .sortBy('score')
