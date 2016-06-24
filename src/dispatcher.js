@@ -2,12 +2,13 @@
 
 const { expect } = require('code');
 const clark = require('clark');
+const Redis = require('redis');
 const Rx = require('rx-lite');
 
 const Bot = require('./bot');
 const Brain = require('./brain');
+const Librarian = require('./librarian');
 const Logger = require('./logger');
-const Redis = require('redis');
 
 const redisPort = process.env.NODE_ENV === 'production'
   ? process.env.REDIS_PORT
@@ -30,6 +31,9 @@ class Dispatcher {
       redisClient: Redis.createClient({ port: redisPort }),
       logger: new Logger(logLevel, ['redis'])
     });
+    this._librarian = new Librarian({
+      logger: new Logger(logLevel, ['libraries'])
+    });
 
     this._commands = {
       greet: {
@@ -43,6 +47,68 @@ class Dispatcher {
           });
         },
         description: 'Greeting'
+      },
+      getLibraries: {
+        validate: ({ platform, query }) => !!platform && !!query,
+        actions: ({ query, platform, channel }) => {
+          return this._librarian
+            .getLibrariesForQuery(platform, query)
+            .flatMap(libraries => {
+              let message = {
+                channel: channel.id,
+                text: `Unfortunately, no libraries were found for "${query}"`
+              };
+
+              if (libraries && libraries.length > 0) {
+                message.text = 'These are some ' +
+                  Librarian.formattedPlatform(platform) +
+                  ` libraries I found for "${query}":`;
+                message.attachments = libraries.map(library => {
+                  const attachment = {
+                    fallback: library.title,
+                    title: library.title,
+                    title_link: library.link,
+                    text: library.description,
+                    fields: []
+                  };
+
+                  if (library.stars) {
+                    attachment.fields.push({
+                      title: 'Stars',
+                      value: library.stars,
+                      short: true
+                    });
+                  }
+                  if (library.packageManager) {
+                    attachment.fields.push({
+                      title: 'Package Manager',
+                      value: library.packageManager,
+                      short: true
+                    });
+                  }
+                  if (library.source) {
+                    attachment.fields.push({
+                      title: 'Source',
+                      value: library.source,
+                      short: true
+                    });
+                  }
+                  if (library.category) {
+                    attachment.fields.push({
+                      title: 'Category',
+                      value: library.category,
+                      short: true
+                    });
+                  }
+
+                  return attachment;
+                });
+              }
+
+              return this._bot.sayMessage(message);
+            });
+        },
+        description: 'Getting libraries'
       },
       vote: {
         validate: ({ votedUser, operator }) => !!votedUser &&
@@ -159,11 +225,11 @@ class Dispatcher {
         this._logger.info(message);
       })
       .flatMap(options => command.actions(options))
-      .catch(err => {
-        this._logger.error(`Failed to process command ${commandName}: ${err}`);
-
-        return this._bot.sayError(options.channelId);
-      })
+      // .catch(err => {
+      //   this._logger.error(`Failed to process command ${commandName}: ${err}`);
+      //
+      //   return this._bot.sayError(options.channelId);
+      // })
       .subscribe();
   }
 
@@ -273,7 +339,8 @@ class Dispatcher {
         this._brain.getUserScores(),
         this._brain.getUsers()
       )
-      .map(([scores, users]) => Object.keys(scores || {})
+      .map(([scores, users]) => Object
+        .keys(scores || {})
         .map(userId => {
           const user = users.find(user => user.id === userId);
           const username = (user || {}).name;
@@ -283,7 +350,7 @@ class Dispatcher {
             points: parseInt(scores[userId], 10)
           };
         })
-        .filter(score => score.points > 0)
+        .filter(score => Math.abs(score.points) > 0)
       )
       .map(scores => {
         if (!scores || scores.length === 0) {
@@ -300,17 +367,16 @@ class Dispatcher {
           return scores;
         }, {});
 
-        let points = Object
+        const points = Object
           .keys(scores)
           .map(point => parseInt(point))
           .sort((a, b) => b - a);
-        points = points.slice(0, Math.min(10, points.length));
 
         const table = points
           .map((points, i) => scores[points].map((username, j) => {
             const num = `${i + 1}.`;
             return `${j === 0 ? num : ' '.repeat(num.length)} ` +
-              `${username}: ${points} point${points > 1 ? 's' : ''}` +
+              `${username}: ${points} point${Math.abs(points) > 1 ? 's' : ''}` +
               (i === 0 ? ' 👑' : '');
           }))
           .reduce((a, b) => a.concat(b));

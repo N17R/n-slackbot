@@ -42,8 +42,8 @@ class Bot {
       .map(response => (response || {}).channels)
       .do(
         channels => {
-          this._logger.debug(`Got ${(channels || []).length} channels on ' +
-            'the team`);
+          this._logger.debug(`Got ${(channels || []).length} channels on ` +
+            'the team');
         },
         err => {
           this._logger.error(`Failed to get channels on the team: ${err}`);

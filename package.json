@@ -22,18 +22,23 @@
     "bots"
   ],
   "dependencies": {
-    "ascii-tree": "^0.3.0",
-    "botkit": "^0.2.0",
+    "botkit": "^0.2.2",
+    "cheerio": "^0.20.0",
     "clark": "0.0.6",
     "code": "^3.0.1",
     "colors": "^1.1.2",
     "dotenv": "^2.0.0",
+    "got": "^6.3.0",
     "json-stringify-safe": "^5.0.1",
-    "redis": "^2.6.1",
-    "rx-lite": "^4.0.8"
+    "lodash": "^4.13.1",
+    "nearest-neighbor": "0.0.3",
+    "redis": "^2.6.2",
+    "require-all": "^2.0.0",
+    "rx-lite": "^4.0.8",
+    "similarity": "^1.0.2"
   },
   "devDependencies": {
-    "eslint": "^2.11.1",
+    "eslint": "^2.13.1",
     "eslint-config-semistandard": "^6.0.2",
     "eslint-config-standard": "^5.3.1",
     "eslint-plugin-promise": "^1.3.2",
